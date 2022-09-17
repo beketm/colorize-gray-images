@@ -2,6 +2,8 @@ import torch
 import torchvision
 from dataset import CarvanaDataset
 from torch.utils.data import DataLoader
+import matplotlib.pyplot as plt
+import torchvision.transforms as T
 
 def save_checkpoint(state, filename="my_checkpoint.pth.tar"):
     print("=> Saving checkpoint")
@@ -83,11 +85,10 @@ def save_predictions_as_imgs(
     for idx, (x, y) in enumerate(loader):
         x = x.to(device=device)
         with torch.no_grad():
-            preds = torch.sigmoid(model(x))
-            preds = (preds > 0.5).float()
-        torchvision.utils.save_image(
-            preds, f"{folder}/pred_{idx}.png"
-        )
-        torchvision.utils.save_image(y.unsqueeze(1), f"{folder}{idx}.png")
+            preds = model(x)
+            fig, ax = plt.subplots( nrows=1, ncols=2 )
+            ax[0][1].imshow(T.ToPILImage()(preds))
+            ax[0][1].imshow(T.ToPILImage()(y))
+            fig.savefig(f"{folder}{idx}.png",  bbox_inches='tight')
 
-    model.train()
+

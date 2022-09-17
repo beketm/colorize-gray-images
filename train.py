@@ -12,6 +12,7 @@ from utils import (
     check_accuracy,
     save_predictions_as_imgs,
 )
+import gc
 
 # Hyperparameters etc.
 LEARNING_RATE = 1e-4
@@ -103,15 +104,15 @@ def main():
             "state_dict": model.state_dict(),
             "optimizer":optimizer.state_dict(),
         }
-        save_checkpoint(checkpoint)
+        # save_checkpoint(checkpoint)
 
         # check accuracy
         # check_accuracy(val_loader, model, device=DEVICE)
 
         # print some examples to a folder
-        save_predictions_as_imgs(
-            val_loader, model, folder="saved_images/", device=DEVICE
-        )
+    save_predictions_as_imgs(
+        val_loader, model, folder="saved_images/", device=DEVICE
+    )
 
 
 if __name__ == "__main__":

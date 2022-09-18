@@ -35,8 +35,9 @@ def train_fn(loader, model, optimizer, loss_fn, scaler):
     for batch_idx, (data, targets) in enumerate(loop):
         data = data.to(device=DEVICE)
         targets = targets.float().to(device=DEVICE)
-        print(data.shape)
-        print(targets.shape)
+        # print(data.shape)
+        # print(targets.shape)
+        
         # forward
         predictions = model(data)
         assert predictions.shape == targets.shape
@@ -110,6 +111,7 @@ def main():
         # check_accuracy(val_loader, model, device=DEVICE)
 
         # print some examples to a folder
+    
     save_predictions_as_imgs(
         val_loader, model, folder="saved_images/", device=DEVICE
     )

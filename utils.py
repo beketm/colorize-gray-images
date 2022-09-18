@@ -79,16 +79,19 @@ def check_accuracy(loader, model, device="cuda"):
     model.train()
 
 def save_predictions_as_imgs(
-    loader, model, folder="saved_images/", device="cuda"
+    loader, model, folder="saved_images/", device="cuda", save_ith_image=4
 ):
     model.eval()
     for idx, (x, y) in enumerate(loader):
-        x = x.to(device=device)
-        with torch.no_grad():
-            preds = model(x)
-            fig, ax = plt.subplots( nrows=1, ncols=2 )
-            ax[0][1].imshow(T.ToPILImage()(preds))
-            ax[0][1].imshow(T.ToPILImage()(y))
-            fig.savefig(f"{folder}{idx}.png",  bbox_inches='tight')
-
+        if idx % save_ith_image == 0:
+            x = x.to(device=device)
+            with torch.no_grad():
+                preds = model(x)
+                fig, ax = plt.subplots( nrows=1, ncols=2 )
+                ax[0].set_axis_off()
+                ax[1].set_axis_off()
+                ax[0].imshow(T.ToPILImage()(preds[0]))
+                ax[1].imshow(T.ToPILImage()(y[0]))
+                fig.savefig(f"{folder}{idx}.png",  bbox_inches='tight')
+    model.train()
 

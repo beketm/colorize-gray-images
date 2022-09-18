@@ -14,10 +14,6 @@ def load_checkpoint(checkpoint, model):
     model.load_state_dict(checkpoint["state_dict"])
 
 def get_loaders(
-    train_dir,
-    train_maskdir,
-    val_dir,
-    val_maskdir,
     batch_size,
     train_transform,
     val_transform,
@@ -25,8 +21,7 @@ def get_loaders(
     pin_memory=True,
 ):
     train_ds = CarvanaDataset(
-        image_dir=train_dir,
-        mask_dir=train_maskdir,
+        mode="train",
         transform=train_transform,
     )
 
@@ -39,8 +34,7 @@ def get_loaders(
     )
 
     val_ds = CarvanaDataset(
-        image_dir=val_dir,
-        mask_dir=val_maskdir,
+        mode="validation",
         transform=val_transform,
     )
 

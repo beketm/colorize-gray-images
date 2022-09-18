@@ -20,8 +20,8 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 BATCH_SIZE = 2
 NUM_EPOCHS = 3
 NUM_WORKERS = 2
-IMAGE_HEIGHT = 192  # 1280 originally
-IMAGE_WIDTH = 192  # 1918 originally
+IMAGE_HEIGHT = 160  # 1280 originally
+IMAGE_WIDTH = 160  # 1918 originally
 PIN_MEMORY = True
 LOAD_MODEL = False
 TRAIN_IMG_DIR = "images/gray"
@@ -81,10 +81,6 @@ def main():
         param.requires_grad = True
 
     train_loader, val_loader = get_loaders(
-        TRAIN_IMG_DIR,
-        TRAIN_MASK_DIR,
-        VAL_IMG_DIR,
-        VAL_MASK_DIR,
         BATCH_SIZE,
         train_transform,
         val_transforms,

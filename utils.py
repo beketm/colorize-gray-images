@@ -87,11 +87,14 @@ def save_predictions_as_imgs(
             x = x.to(device=device)
             with torch.no_grad():
                 preds = model(x)
-                fig, ax = plt.subplots( nrows=1, ncols=2 )
+                fig, ax = plt.subplots( nrows=1, ncols=3 )
                 ax[0].set_axis_off()
                 ax[1].set_axis_off()
-                ax[0].imshow(T.ToPILImage()(preds[0]))
-                ax[1].imshow(T.ToPILImage()(y[0]))
+                ax[2].set_axis_off()
+
+                ax[0].imshow(T.ToPILImage()(x[0]), cmap='gray')
+                ax[1].imshow(T.ToPILImage()(preds[0]))
+                ax[2].imshow(T.ToPILImage()(y[0]))
                 fig.savefig(f"{folder}{idx}.png",  bbox_inches='tight')
     model.train()
 

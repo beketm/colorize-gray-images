@@ -33,6 +33,8 @@ def train_fn(loader, model, optimizer, loss_fn, scaler):
     loop = tqdm(loader)
 
     for batch_idx, (data, targets) in enumerate(loop):
+        torch.cuda.empty_cache()
+
         data = data.to(device=DEVICE)
         targets = targets.float().to(device=DEVICE)
         # print(data.shape)
@@ -56,6 +58,7 @@ def train_fn(loader, model, optimizer, loss_fn, scaler):
 
 
 def main():
+    torch.cuda.empty_cache()
     train_transform = T.Compose([
             T.PILToTensor(),
             T.ConvertImageDtype(torch.float),
@@ -71,7 +74,7 @@ def main():
         ])
 
     model = UNET().to(DEVICE)
-    loss_fn = nn.BCEWithLogitsLoss()
+    loss_fn = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
     for param in model.parameters():

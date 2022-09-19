@@ -59,6 +59,7 @@ def train_fn(loader, model, optimizer, loss_fn, scaler):
 
 def main():
     torch.cuda.empty_cache()
+    gc.collect()
     train_transform = T.Compose([
             T.PILToTensor(),
             T.ConvertImageDtype(torch.float),

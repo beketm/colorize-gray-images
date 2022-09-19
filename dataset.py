@@ -19,7 +19,7 @@ class CarvanaDataset(Dataset):
     def __getitem__(self, index):
 
         image = self.dataset[index]['image'].convert("L")
-        mask = self.dataset[index]['image']
+        mask = self.dataset[index]['image'].convert("RGB")
 
         if self.transform is not None:
             image = self.transform(image)

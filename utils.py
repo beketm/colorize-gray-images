@@ -90,5 +90,6 @@ def save_predictions_as_imgs(
                 ax[1].imshow(T.ToPILImage()(preds[0]))
                 ax[2].imshow(T.ToPILImage()(y[0]))
                 fig.savefig(f"{folder}{idx}.png",  bbox_inches='tight')
+                plt.close()
     model.train()
 

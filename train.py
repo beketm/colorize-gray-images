@@ -17,13 +17,13 @@ import gc
 # Hyperparameters etc.
 LEARNING_RATE = 1e-4
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-BATCH_SIZE = 2
+BATCH_SIZE = 8
 NUM_EPOCHS = 3
 NUM_WORKERS = 2
 IMAGE_HEIGHT = 160  # 1280 originally
 IMAGE_WIDTH = 160  # 1918 originally
 PIN_MEMORY = True
-LOAD_MODEL = False
+LOAD_MODEL = True
 TRAIN_IMG_DIR = "images/gray"
 TRAIN_MASK_DIR = "images/color"
 VAL_IMG_DIR = "images/gray"
@@ -44,7 +44,7 @@ def train_fn(loader, model, optimizer, loss_fn, scaler):
         predictions = model(data)
         assert predictions.shape == targets.shape
         loss = loss_fn(predictions, targets)
-        print(predictions.shape)
+        # print(predictions.shape)
 
         with torch.no_grad():
             optimizer.zero_grad()
@@ -98,6 +98,7 @@ def main():
     scaler = None
 
     for epoch in range(NUM_EPOCHS):
+        print(f"Epoch {epoch+1}:", end="\n\t")
         train_fn(train_loader, model, optimizer, loss_fn, scaler)
 
         # save model
@@ -105,16 +106,16 @@ def main():
             "state_dict": model.state_dict(),
             "optimizer":optimizer.state_dict(),
         }
-        # save_checkpoint(checkpoint)
+        save_checkpoint(checkpoint)
 
         # check accuracy
         # check_accuracy(val_loader, model, device=DEVICE)
 
         # print some examples to a folder
     
-    save_predictions_as_imgs(
-        val_loader, model, folder="saved_images/", device=DEVICE
-    )
+        save_predictions_as_imgs(
+            val_loader, model, folder="saved_images/", device=DEVICE
+        )
 
 
 if __name__ == "__main__":

@@ -1,77 +1,106 @@
 import torch
 import torch.nn as nn
-import torchvision.transforms.functional as TF
+import torchvision.transforms as T
+import torchvision
+import timm
 
-class DoubleConv(nn.Module):
-    def __init__(self, in_channels, out_channels):
-        super(DoubleConv, self).__init__()
-        self.conv = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, 3, 1, 1, bias=False),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(out_channels, out_channels, 3, 1, 1, bias=False),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True)
+class Encoder(nn.Module):
+    def __init__(self):
+        super(Encoder, self).__init__()
+        self.transformer = nn.Sequential(
+            T.Resize((224, 224)),
+        )
+        self.encoder = nn.Sequential(
+            nn.Conv2d(1, 64, kernel_size=3, stride=2, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(64, 128, kernel_size=3, stride=1, padding="same"),
+            nn.ReLU(),
+            nn.Conv2d(128, 128, kernel_size=3, stride=2, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(128, 256, kernel_size=3, stride=1, padding="same"),
+            nn.ReLU(),
+            nn.Conv2d(256, 256, kernel_size=3, stride=2, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(256, 512, kernel_size=3, stride=1, padding="same"),
+            nn.ReLU(),
+            nn.Conv2d(512, 512, kernel_size=3, stride=1, padding="same"),
+            nn.ReLU(),
+            nn.Conv2d(512, 256, kernel_size=3, stride=1, padding="same"),
+            nn.ReLU()
         )
     
     def forward(self, x):
-        return self.conv(x)
 
+        return self.encoder(self.transformer(x))
 
-class UNET(nn.Module):
-    def __init__(
-        self, in_channels=1, out_channels=3, features=[64, 128, 256, 512]
-    ):
-        super(UNET, self).__init__()
-        self.ups = nn.ModuleList()
-        self.downs = nn.ModuleList()
-        self.pool = nn.MaxPool2d(kernel_size=2, stride=1)
-
-        #Down part of UNET
-        for feature in features:
-            self.downs.append(DoubleConv(in_channels, feature))
-            in_channels = feature
-        
-        #Up part of UNET
-        for feature in reversed(features):
-            self.ups.append(nn.ConvTranspose2d(feature*2, feature, 2, 2))
-            self.ups.append(DoubleConv(feature*2, feature))
-        
-        self.bottleneck = DoubleConv(features[-1], features[-1]*2)
-        self.final_conv = nn.Conv2d(features[0], out_channels, kernel_size=1)
+class Inception(nn.Module):
+    def __init__(self):
+        super(Inception, self).__init__()
+        self.transformer = nn.Sequential(
+            T.Resize((299, 299)),
+        )
+        self.inception = timm.create_model('inception_resnet_v2', pretrained=True)
+        for layer in self.inception.parameters():
+            layer.requires_grad = False
+        # print(self.inception._modules)
     
+    def forward(self, x):
+        x = torch.cat((x, x, x), dim=1)
+        # print(x.shape)
+        return self.inception(self.transformer(x))
+
+class Decoder(nn.Module):
+    def __init__(self):
+        super(Decoder, self).__init__()
+        
+        self.decoder = nn.Sequential(
+            nn.Conv2d(256, 128, kernel_size=3, stride=1, padding="same"),
+            nn.ReLU(),
+            torch.nn.Upsample(scale_factor=2),
+            nn.Conv2d(128, 64, kernel_size=3, stride=1, padding="same"),
+            nn.ReLU(),      
+            nn.Conv2d(64, 64, kernel_size=3, stride=1, padding="same"),
+            nn.ReLU(),
+            torch.nn.Upsample(scale_factor=2),
+            nn.Conv2d(64, 32, kernel_size=3, stride=1, padding="same"),
+            nn.ReLU(),
+            nn.Conv2d(32, 2, kernel_size=3, stride=1, padding="same"),
+            nn.Tanh(),
+            torch.nn.Upsample(scale_factor=2),
+        )
+    
+    def forward(self, x):
+        return self.decoder(x)
+
+class Koala(nn.Module):
+    def __init__(self):
+        super(Koala, self).__init__()
+        self.encoder = Encoder()
+
+        self.feature_extractor = Inception()
+        self.fusion = nn.Conv2d(1256, 256, kernel_size=1, stride=1, padding="same")
+        
+        self.decoder = Decoder()
 
     def forward(self, x):
-        skip_connections = []
+        z_layer = self.encoder(x)  
+        features = self.feature_extractor(x)
+        features = features.reshape(-1, 1000, 1, 1)   
+        features = features.repeat(1, 1, 28, 28)
+
+        fusion_layer = torch.cat((z_layer, features), dim=1)
+        x = self.fusion(fusion_layer)
+        x = self.decoder(x)
+        return x
         
-        for down in self.downs:
-            x = down(x)
-            skip_connections.append(x)
-            # x = self.pool(x)
-
-        x = self.bottleneck(x)
-
-        skip_connections.reverse()
-
-        for idx in range(0, len(self.ups), 2):
-            x = self.ups[idx](x)
-            skip_connection = skip_connections[idx//2]
-
-            if x.shape != skip_connection.shape:
-                x = TF.resize(x, size=skip_connection.shape[2:])
-
-            concat_skip = torch.cat((skip_connection, x), dim=1)
-            x = self.ups[idx+1](concat_skip)
-        
-        return self.final_conv(x)
 
 
 def test():
-    x = torch.rand((4, 1, 160, 160))
-    model = UNET()
+    x = torch.rand((4, 1, 224, 224))
+    model = Koala()
     preds = model(x)
     print(preds.shape)
-    print(x.shape)
+
 
     # assert preds.shape == x.shape
 
